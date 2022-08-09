@@ -80,12 +80,16 @@ class MongodbAnonymizer extends Command {
         list
       );
 
-      this.log("Inserting collection in target: " + collectionName);
-      await targetDb.collection(collectionName).deleteMany({});
-      // Save collection
-      await targetDb
-        .collection(collectionName)
-        .insertMany(collectionDataAnonymized);
+      if(collectionDataAnonymized.length !== 0) {
+        this.log("Inserting collection in target: " + collectionName);
+        await targetDb.collection(collectionName).deleteMany({});
+        // Save collection
+        await targetDb
+          .collection(collectionName)
+          .insertMany(collectionDataAnonymized);
+      } else {
+        this.log("Collection is empty. Skipping: " + collectionName);
+      }
     }
     this.log("Done!");
 
@@ -137,7 +141,11 @@ class MongodbAnonymizer extends Command {
       if (replacement.startsWith("faker")) {
         const [_one, two, three] = replacement.split(".");
         if (!(two && three)) return replacement;
-        return faker[two][three]();
+        const withArgs = replacement.split('(')
+        if(withArgs.length > 1){
+          return eval(replacement)
+        }
+        return faker[two][three]()
       } else if (replacement === "[]") {
         return [];
       } else if (replacement === "{}") {
